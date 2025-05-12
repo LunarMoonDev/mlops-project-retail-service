@@ -6,23 +6,20 @@ from config import conf
 from toolz import compose_left
 from sklearn.preprocessing import FunctionTransformer, PowerTransformer
 from sklearn.feature_extraction import DictVectorizer
-from sklearn.pipeline import make_pipeline
-from sklearn.pipeline import Pipeline
-from sklearn.base import BaseEstimator
-from utils.df_util import filter_outlier_data
+from sklearn.pipeline import Pipeline, make_pipeline
+from sklearn.preprocessing import FunctionTransformer
 
-def filter_feature(df: pd.DataFrame):
-    """
-        filters the df with a given feature
-    """
-    return filter_outlier_data(df = df,
-                               feature = conf.FILTER_FEATURE,
-                               min = conf.FILTER_MIN,
-                               max = conf.FILTER_MAX)
+from config import conf
 
-def feature_selector(df: pd.DataFrame):
-    """
-        pipeline to grab features from the dataframe
+
+def feature_selector(df: pd.DataFrame) -> pd.DataFrame:
+    """pipeline to grab features from given df
+
+    Args:
+        df (DataFrame): given input
+
+    Returns:
+        DataFrame: feature dataframe
     """
     return df[conf.FEATURES]
 
@@ -72,7 +69,7 @@ def feature_pipeline(transforms: tuple = ()) -> Pipeline:
     
     return make_pipeline(
         FunctionTransformer(convert_to_dataframe),
-        FunctionTransformer(pre_processor),
+        *transfomers,
         FunctionTransformer(convert_to_dict),
         DictVectorizer()
     )
