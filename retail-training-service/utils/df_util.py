@@ -1,13 +1,25 @@
-from pandas import DataFrame
+import matplotlib.pyplot as plt
+import seaborn as sns
+from matplotlib.figure import Figure
+from pandas import DataFrame, to_datetime
 
-def filter_outlier_data(df: DataFrame, feature: str, min: float, max: float):
-    """
-        Filter feature here is Purchase technically
-        but to make it more configurable it's in config
 
-        this method filters the dataframe according to the (min, max)
+def filter_outlier_data(
+    df: DataFrame, feature: str, min_val: float, max_val: float
+) -> DataFrame:
+    """Filters a given dataframe
+
+    Args:
+        df (DataFrame): given input
+        feature (str): feature to filter
+        min (float): max value to filter
+        max (float): min value to filter
+
+    Returns:
+        DataFrame: filtered dataframe
     """
-    mask = (df[feature] >= min) & (df[feature] <= max)
+
+    mask = (df[feature] >= min_val) & (df[feature] <= max_val)
     return df[mask]
 
 
