@@ -11,8 +11,19 @@ mlflow = "*"
 pydantic = "*"
 boto3 = "*"
 strictyaml = "*"
+prefect = "*"
+seaborn = "*"
+xgboost = "*"
+optuna = "*"
 
 [dev-packages]
+mlcroissant = "*"
+pyarrow = "*"
+s3fs = "*"
+awswrangler = "*"
+isort = "*"
+black = "*"
+pylint = "*"
 
 [requires]
 python_version = "3.10"
