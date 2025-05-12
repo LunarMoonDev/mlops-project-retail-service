@@ -1,42 +1,71 @@
 from pandas import DataFrame
-from sklearn.preprocessing import FunctionTransformer
-from config import conf
-from functools import partial
+from sklearn.base import BaseEstimator, TransformerMixin
 
-class ImputateTransformer(FunctionTransformer):
-    """
-        Transformer class for imputating values
-    """
-    def fit(self, X: DataFrame, y=None) -> 'ImputateTransformer':
+
+class ImputateTransformer(BaseEstimator, TransformerMixin):
+    """Transformer class for imputating values"""
+
+    def __init__(
+        self, by: str = None, columns: list[str] = None, strats: list[str] = None
+    ):
+        self.by = by
+        self.columns = columns
+        self.strats = strats
+
+    # pylint: disable=unused-argument
+    def fit(self, df: DataFrame, y=None):
+        """fits the data to make an imputate look up table
+
+        Args:
+            df (DataFrame): given input dataframe
+            y (_type_, optional): y values (Default: None)
+
+        Returns:
+            _type_: instance of ImputateTransformer
         """
-            fits the data to make an imputate look up table
-        """
 
-        aggre_df = X.copy().dropna()
-        aggre_df = aggre_df[[conf.DATA_IMPUTATE_CATEGORY] + conf.DATA_IMPUTATE_FEATURES]
-        aggre_func = dict(zip(conf.DATA_IMPUTATE_FEATURES, conf.DATA_IMPUTATE_STRAT))
-        self.look_up = aggre_df.groupby(conf.DATA_IMPUTATE_CATEGORY).agg(**aggre_func)
+        aggre_df = df.copy().dropna()
+        aggre_df = aggre_df[[self.by] + self.columns]
 
+        # converting dict to tuple
+        aggregations = zip(self.columns, self.strats)
+        aggre_dict = {}
+
+        # for naming scheme
+        for key, aggregate in zip(self.columns, aggregations):
+            aggre_dict[key] = aggregate
+
+        # apparently merge still works even if self.by is index, maybe faster?
+        lookup_df = aggre_df.groupby(self.by).agg(**aggre_dict)
+
+        # pylint: disable=attribute-defined-outside-init
+        self.lookup_df = lookup_df
+        # pylint: enable=attribute-defined-outside-init
         return self
-    
-    def transform(self, X: DataFrame) -> DataFrame:
-        """
-            imputates the dataframe on missing values
-        """
-        X_imputed = X.copy()
 
-        categories = X_imputed[conf.DATA_IMPUTATE_CATEGORY]
-        for feature in conf.DATA_IMPUTATE_FEATURES:
-            map_func = partial(self.__grab_value, y=feature)
-            X_imputed[feature] =  X_imputed[feature].fillna(categories.map(map_func))
+    # pylint: enable=unused-argument
 
-        return X_imputed
-    
+    def transform(self, df: DataFrame) -> DataFrame:
+        """imputates the dataframe on missing values
 
-    def __grab_value(self, feature: str, item: str):
+        Args:
+            df (DataFrame): given dataframe
+
+        Returns:
+            DataFrame: imputated dataframe
         """
-            grabs the imputes value
-        """
-        mask = self.look_up[conf.DATA_IMPUTATE_CATEGORY] == item
-        return self.look_up[mask][feature]
-        
+
+        imputated_df = df.copy()
+        imputated_df_filled = df.merge(
+            self.lookup_df, on=self.by, how="left", suffixes=("", "_lookup")
+        )
+        lookup_cols = [f"{col}_lookup" for col in self.columns]
+
+        for col, lookup_col in zip(self.columns, lookup_cols):
+            imputated_df_filled[col] = imputated_df_filled[col].combine_first(
+                imputated_df_filled[lookup_col]
+            )
+
+        imputated_df = imputated_df_filled.drop(columns=lookup_cols)
+
+        return imputated_df
