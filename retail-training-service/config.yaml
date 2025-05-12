@@ -1,0 +1,70 @@
+# Feature related configs
+FEATURE_TARGET: ReviewRating
+
+FEATURES_LIST:
+  - ItemPurchased
+  - PurchaseAmount
+
+NUMERICALS:
+  - PurchaseAmount
+  - ReviewRating
+
+CATEGORICALS:
+  - CustomerId
+  - PaymentMethod
+  - ItemPurchased
+
+FEATURES_DATE:
+  - DatePurchase
+
+FEATURES_SCALE_LIST:
+  - PurchaseAmount
+
+FEATURES_MAPPING:
+  "Customer Reference ID": CustomerId
+  "Item Purchased": ItemPurchased
+  "Purchase Amount (USD)": PurchaseAmount
+  "Date Purchase": DatePurchase
+  "Review Rating": ReviewRating
+  "Payment Method": PaymentMethod
+
+# feature to filter
+FILTER_FEATURE: PurchaseAmount
+FILTER_MAX: 210    
+FILTER_MIN: 0     
+
+# Toggle for filtering and dropping na in feature
+FILTER_TOGGLE: False       
+DROP_TOGGLE: False
+
+# Reproducibility
+RANDOM_STATE: 46
+
+# Imputation settings
+DATA_IMPUTATE_CATEGORY: ItemPurchased   
+DATA_IMPUTATE_FEATURES:
+  - PurchaseAmount                      
+DATA_IMPUTATE_STRAT:
+  - median                             
+
+# Batch processing settings
+BATCH_TODAY_OFFSET: 0                  
+BATCH_DATA_PATH: s3://data/train/{data_path}_batch_data.csv
+BATCH_TEST_SIZE: 0.3                   
+
+# MLflow tracking settings
+TRACKING_URI: http://localhost:5000
+EXPERIMENT_NAME: retail_filter0_drop0_experiment
+
+# XGBOOST settings
+XG_MAX_DEPTH_MIN: 4
+XG_MAX_DEPTH_MAX: 100
+XG_N_ESTIMATORS_MIN: 1
+XG_N_ESTIMATORS_MAX: 10
+XG_N_ESTIMATORS_STEP: 1
+XG_N_LEARNING_RATE_MIN: 1e-3
+XG_N_LEARNING_RATE_MAX: 1
+XG_CHILD_WEIGHT_MIN: 0.1
+XG_CHILD_WEIGHT_MAX: 300
+XG_EARLY_STOPPING_ROUNDS: 50
+XG_N_TRIALS: 10

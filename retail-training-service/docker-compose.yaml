@@ -1,0 +1,89 @@
+version: '3.8'
+
+services:
+  postgres:
+    container_name: mlflow_db
+    image: postgres
+    environment:
+      - POSTGRES_USER=sample
+      - POSTGRES_PASSWORD=example
+      - POSTGRES_DB=mlflow_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./scripts/postgres:/docker-entrypoint-initdb.d
+    networks:
+      - logger-tier
+
+  adminers:
+    container_name: mlflow_db_interface
+    image: adminer
+    restart: always
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+    networks:
+      - logger-tier
+
+  minio:
+    image: minio/minio:latest
+    ports:
+      - '9000:9000'
+      - '9001:9001'
+    volumes:
+      - 'minio_data:/data'
+    environment:
+      - MINIO_ROOT_USER=minio-root-user
+      - MINIO_ROOT_PASSWORD=minio-root-password
+    command: server /data
+    networks:
+      - logger-tier
+
+  prefect:
+    image: prefecthq/prefect:3.3.8.dev4-python3.10
+    environment:
+      - PREFECT_API_DATABASE_CONNECTION_URL=postgresql+asyncpg://sample:example@postgres:5432/prefect_db
+      - PREFECT_API_URL=http://localhost:4200/api
+    command: prefect server start --host 0.0.0.0
+    ports:
+      - "4200:4200"
+    depends_on:
+      - postgres
+    networks:
+      - logger-tier
+
+  mlflow:
+    container_name: mlflow
+    build:
+      context: .
+      dockerfile: docker/mlflow.dockerfile
+    restart: always
+    depends_on:
+      - minio
+      - postgres
+    environment:
+      - MLFLOW_S3_ENDPOINT_URL=http://minio:9000
+      - AWS_DEFAULT_REGION=us-east-1
+      - AWS_ACCESS_KEY_ID=minio-root-user
+      - AWS_SECRET_ACCESS_KEY=minio-root-password
+    ports:
+      - "5000:5000"
+    command: >
+      mlflow server
+      --backend-store-uri postgresql://sample:example@postgres:5432/mlflow_db
+      --default-artifact-root s3://mlflow/
+      --host 0.0.0.0
+      --port 5000
+    networks:
+      - logger-tier
+
+volumes:
+  pgdata:
+  minio_data:
+
+networks:
+  logger-tier:
+    name: logger-tier
+    external: false
