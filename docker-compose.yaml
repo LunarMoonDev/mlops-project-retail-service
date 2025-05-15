@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  postgres:
+    container_name: project_db
+    image: postgres
+    environment:
+      - POSTGRES_USER=sample
+      - POSTGRES_PASSWORD=example
+      - POSTGRES_DB=mlflow_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./.data/database:/var/lib/postgresql/data
+      - ./scripts/:/docker-entrypoint-initdb.d
+    networks:
+      - parent-tier
+
+  minio:
+    container_name: project_storage
+    image: minio/minio:latest
+    ports:
+      - '9000:9000'
+      - '9001:9001'
+    volumes:
+      - './.data/bucket:/data'
+    environment:
+      - MINIO_ROOT_USER=minio-root-user
+      - MINIO_ROOT_PASSWORD=minio-root-password
+    command: server /data --console-address ":9001"
+    networks:
+      - parent-tier
+  
+  adminers:
+    container_name: project_db_interface
+    image: adminer
+    restart: always
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+    networks:
+      - parent-tier
+
+networks:
+  parent-tier:
+    name: parent-tier
+    external: false
