@@ -12,8 +12,8 @@ echo_message = \
 # targets		 
 quality_checks:
 		$(call echo_message,[QUALITY_CHECK] Starting quality check...)
-		isort --diff .
-		black --diff .
+		isort .
+		black .
 		pylint --recursive=y .
 
 setup_local:

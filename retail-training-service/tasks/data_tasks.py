@@ -27,8 +27,8 @@ def retrieve_data() -> pd.DataFrame:
     today = datetime.now() - timedelta(days=conf.BATCH_TODAY_OFFSET)
     today_str = today.strftime("%Y-%m-%d")
 
-    logger.info("Retrieving parquet data from s3 bucket as dataframe ...")
-    # path format will be s3://bucket-name/train/{data_path}_batch_data.parquet
+    logger.info("Retrieving csv data from s3 bucket as dataframe ...")
+    # path format will be s3://bucket-name/train/{data_path}_batch_data.csv
     batch_data_path = conf.BATCH_DATA_PATH.format(data_path=today_str)
     return wr.s3.read_csv(path=batch_data_path)
 
