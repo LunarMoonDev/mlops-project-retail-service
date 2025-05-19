@@ -23,4 +23,4 @@ setup_local:
 
 run_local:
 		$(call echo_message,[RUN_LOCAL] Executing Prefect Locally...)
-		PREFECT_API_URL=http://localhost:4200/api AWS_PROFILE=minio python -m main
+		PREFECT_API_URL=http://localhost:4200/api AWS_PROFILE=minio python -b main.py
