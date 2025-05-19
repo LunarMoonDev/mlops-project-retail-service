@@ -49,7 +49,7 @@ DATA_IMPUTATE_STRAT:
 
 # Batch processing settings
 BATCH_TODAY_OFFSET: 0                  
-BATCH_DATA_PATH: s3://data/train/{data_path}_batch_data.csv
+BATCH_DATA_PATH: s3://data/train/2025-18-05_batch_data.csv
 BATCH_TEST_SIZE: 0.3                   
 
 # MLflow tracking settings
