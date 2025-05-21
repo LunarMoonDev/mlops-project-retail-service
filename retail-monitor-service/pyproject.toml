@@ -1,0 +1,20 @@
+[tool.pylint.'MASTER']
+init-hook = 'import sys; sys.path.append(".")'
+
+[tool.pylint.messages_control]
+disable = [
+    "too-few-public-methods",
+    "missing-module-docstring"
+]
+max-args = 7
+max-locals = 20
+
+[tool.black]
+line-length = 88
+target-version = ['py311']
+skip-string-normalization = true
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+known_local_folder = ["tasks", "utils", "config"]
