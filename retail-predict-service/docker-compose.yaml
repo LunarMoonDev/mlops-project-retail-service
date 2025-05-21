@@ -39,6 +39,12 @@ services:
     build: 
       context: .
       dockerfile: docker/retail.dockerfile
+    command: >
+      sh -c "
+        wget -qO- https://raw.githubusercontent.com/eficode/wait-for/v2.2.3/wait-for | sh -s -- prefect:4200 -- echo waited sucessfully for prefect && \
+        wget -qO- https://raw.githubusercontent.com/eficode/wait-for/v2.2.3/wait-for | sh -s -- mlflow:5000 -- echo waited sucessfully for mlflow && \
+        python -b main.py
+      "
     depends_on:
       - prefect
       - mlflow
