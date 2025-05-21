@@ -17,4 +17,4 @@ skip-string-normalization = true
 [tool.isort]
 profile = "black"
 multi_line_output = 3
-known_local_folder = ["tasks", "utils", "models", "config"]
+known_local_folder = ["tasks", "utils", "config"]
