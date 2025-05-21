@@ -1,0 +1,74 @@
+version: '3.8'
+
+services:
+  prefect:
+    image: prefecthq/prefect:3.3.8.dev4-python3.10
+    environment:
+      - PREFECT_API_DATABASE_CONNECTION_URL=postgresql+asyncpg://sample:example@postgres:5432/batch_prefect_db
+      - PREFECT_API_URL=http://localhost:4200/api
+    command: prefect server start --host 0.0.0.0
+    ports:
+      - "4200:4200"
+    networks:
+      - parent-tier
+
+  grafana:
+    image: grafana/grafana
+    user: "472"
+    volumes:
+      - ./grafana/grafana_datasources.yaml:/etc/grafana/provisioning/datasources/datasource.yaml:ro
+      - ./grafana/grafana_dashboards.yaml:/etc/grafana/provisioning/dashboards/dashboards.yaml:ro
+      - ./grafana/dashboard:/opt/grafana/dashboards:ro
+    ports:
+      - "3000:3000"
+    networks:
+      - parent-tier
+    restart: always
+  
+  mlflow:
+    build:
+      context: .
+      dockerfile: docker/mlflow.dockerfile
+    restart: always
+    environment:
+      - MLFLOW_S3_ENDPOINT_URL=http://minio:9000
+      - AWS_DEFAULT_REGION=us-east-1
+      - AWS_ACCESS_KEY_ID=minio-root-user
+      - AWS_SECRET_ACCESS_KEY=minio-root-password
+    ports:
+      - "5000:5000"
+    command: >
+      mlflow server
+      --backend-store-uri postgresql://sample:example@postgres:5432/mlflow_db
+      --default-artifact-root s3://mlflow/
+      --host 0.0.0.0
+      --port 5000
+    networks:
+      - parent-tier
+
+  retail:
+    container_name: retail_monitor_service
+    build:
+      context: .
+      dockerfile: docker/retail-monitor.dockerfile
+    command: >
+      sh -c "
+        wget -qO- https://raw.githubusercontent.com/eficode/wait-for/v2.2.3/wait-for | sh -s -- prefect:4200 -- echo waited sucessfully for prefect && \
+        wget -qO- https://raw.githubusercontent.com/eficode/wait-for/v2.2.3/wait-for | sh -s -- mlflow:5000 -- echo waited sucessfully for mlflow && \
+        python -b main.py
+      "
+    depends_on:
+      - prefect
+      - mlflow
+    restart: always
+    env_file:
+      - docker.env
+    volumes:
+      - .local/aws:/root/.aws:ro
+    networks:
+      - parent-tier
+
+networks:
+  parent-tier:
+    name: parent-tier
+    external: true
